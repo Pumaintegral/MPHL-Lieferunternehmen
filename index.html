@@ -60,14 +60,12 @@
     }
   </style>
 
-  <!-- FIREBASE SDK INCLUDES -->
+  <!-- FIREBASE SDK INCLUDES (v10.8.0 STABLE) -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'minezon-store';
-    
     // DEINE ECHTEN FIREBASE CONFIG DATEN
     const firebaseConfig = {
       apiKey: "AIzaSyDwBUR_Y7UDT6C8DDAIyKTFvDviHKlXy4U",
@@ -83,11 +81,12 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    console.log("Firebase erfolgreich initialisiert!");
+
     window.firebaseAuth = auth;
     window.firebaseDb = db;
-    window.appId = appId;
-    window.fAuth = { signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut };
-    window.fStore = { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection };
+    window.fAuth = { signInAnonymously, onAuthStateChanged, signOut };
+    window.fStore = { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, getDocs };
   </script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen font-sans flex flex-col antialiased">
@@ -337,7 +336,7 @@
           Live Kundenbestellungen
         </h2>
         <span class="text-xs text-emerald-400 font-mono flex items-center gap-1">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live Speicher Aktiv
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Live Firebase Cloud Aktiv
         </span>
       </div>
 
@@ -354,7 +353,7 @@
             </tr>
           </thead>
           <tbody id="adminOrdersTableBody" class="divide-y divide-gray-700">
-            <!-- Dynamic Admin Orders populated via JS -->
+            <!-- Dynamic Admin Orders -->
           </tbody>
         </table>
       </div>
@@ -561,7 +560,6 @@
       if (!db) return;
 
       try {
-        // Direkte Firebase Sammlung für weltweite Echtzeit-Synchronisierung
         const ordersCol = window.fStore.collection(db, 'orders');
 
         window.fStore.onSnapshot(ordersCol, (snapshot) => {
@@ -856,7 +854,6 @@
 
       if (db) {
         try {
-          // Direkter Upload in die globale Firebase 'orders' Sammlung
           const ordersCol = window.fStore.collection(db, 'orders');
           await window.fStore.addDoc(ordersCol, newOrder);
         } catch (e) {
@@ -996,7 +993,6 @@
       document.getElementById('headerUserLocation').innerText = 'Admin HQ';
       document.getElementById('ownerDashboardBtn').classList.remove('hidden');
 
-      // Passwortfeld nach erfolgreichem Login leeren
       document.getElementById('authPasswordInput').value = '';
 
       closeAuthModal();
