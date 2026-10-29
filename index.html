@@ -69,13 +69,14 @@
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'minezon-store';
     
     // DEINE ECHTEN FIREBASE CONFIG DATEN
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+    const firebaseConfig = {
       apiKey: "AIzaSyDwBUR_Y7UDT6C8DDAIyKTFvDviHKlXy4U",
       authDomain: "mphl-60215.firebaseapp.com",
       projectId: "mphl-60215",
       storageBucket: "mphl-60215.firebasestorage.app",
       messagingSenderId: "979262600414",
-      appId: "1:979262600414:web:9e643c6c85b5c133577e4f"
+      appId: "1:979262600414:web:9e643c6c85b5c133577e4f",
+      measurementId: "G-8D706DJ0ZM"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -553,7 +554,6 @@
     // --- FIRESTORE REAL-TIME ORDERS LISTENER WITH FALLBACK ---
     function setupOrdersListener() {
       const db = window.firebaseDb;
-      const appId = window.appId;
       
       liveOrders = getLocalOrders();
       renderAdminDashboard();
@@ -561,7 +561,8 @@
       if (!db) return;
 
       try {
-        const ordersCol = window.fStore.collection(db, 'artifacts', appId, 'public', 'data', 'orders');
+        // Direkte Firebase Sammlung für weltweite Echtzeit-Synchronisierung
+        const ordersCol = window.fStore.collection(db, 'orders');
 
         window.fStore.onSnapshot(ordersCol, (snapshot) => {
           let cloudOrders = [];
@@ -575,6 +576,7 @@
             renderAdminDashboard();
           }
         }, (err) => {
+          console.warn("Firestore listener error:", err);
           liveOrders = getLocalOrders();
           renderAdminDashboard();
         });
@@ -837,7 +839,6 @@
 
     async function processOrderToFirestore() {
       const db = window.firebaseDb;
-      const appId = window.appId;
 
       const totalPrice = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
       const generatedId = 'ORD-' + Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -855,10 +856,11 @@
 
       if (db) {
         try {
-          const ordersCol = window.fStore.collection(db, 'artifacts', appId, 'public', 'data', 'orders');
+          // Direkter Upload in die globale Firebase 'orders' Sammlung
+          const ordersCol = window.fStore.collection(db, 'orders');
           await window.fStore.addDoc(ordersCol, newOrder);
         } catch (e) {
-          console.warn("Saving directly to local storage.", e);
+          console.warn("Saving directly to local storage fallback.", e);
         }
       }
 
@@ -922,7 +924,6 @@
 
     async function toggleOrderStatus(orderId, currentStatus) {
       const db = window.firebaseDb;
-      const appId = window.appId;
       const newStatus = currentStatus === 'Offen' ? 'Geliefert' : 'Offen';
 
       liveOrders = updateLocalOrderStatus(orderId, newStatus);
@@ -930,7 +931,7 @@
 
       if (db) {
         try {
-          const orderRef = window.fStore.doc(db, 'artifacts', appId, 'public', 'data', 'orders', orderId);
+          const orderRef = window.fStore.doc(db, 'orders', orderId);
           await window.fStore.updateDoc(orderRef, { status: newStatus });
         } catch (e) {}
       }
@@ -939,14 +940,13 @@
 
     async function deleteOrder(orderId) {
       const db = window.firebaseDb;
-      const appId = window.appId;
 
       liveOrders = deleteLocalOrder(orderId);
       renderAdminDashboard();
 
       if (db) {
         try {
-          const orderRef = window.fStore.doc(db, 'artifacts', appId, 'public', 'data', 'orders', orderId);
+          const orderRef = window.fStore.doc(db, 'orders', orderId);
           await window.fStore.deleteDoc(orderRef);
         } catch (e) {}
       }
